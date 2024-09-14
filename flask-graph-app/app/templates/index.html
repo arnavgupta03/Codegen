@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Graph</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div id="graph-container"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        const graphData = {{ graph_data|tojson|safe }};
+    
+        // Create the scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('graph-container').appendChild(renderer.domElement);
+    
+        // Add orbit controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    
+        // Add nodes and edges to the scene
+        const nodes = {};
+        graphData.nodes.forEach(node => {
+            const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.position.set(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5);
+            nodes[node.id] = sphere;
+            scene.add(sphere);
+        });
+    
+        graphData.links.forEach(link => {
+            const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
+            const points = [];
+            points.push(nodes[link.source].position);
+            points.push(nodes[link.target].position);
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const line = new THREE.Line(geometry, material);
+            scene.add(line);
+        });
+    
+        camera.position.z = 10;
+    
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
